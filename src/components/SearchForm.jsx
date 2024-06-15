@@ -1,43 +1,52 @@
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import PokemonInfo from './PokemonInfo';
+
+const baseUrl = 'https://pokeapi.co/api/v2/pokemon/';
 
 export default function SearchForm() {
-  const [pokemon, setPokemon] = useState([]);
-  useEffect(() => {
-    axios
-      .get('https://pokeapi.co/api/v2/pokemon')
-      .then((response) => {
-        setPokemon(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
+  const [pokemonList, setPokemonList] = useState([]);
 
-  function handleSubmit(e) {
-    // Prevent the browser from reloading the page
+  const handleSubmit = (e) => {
     e.preventDefault();
+    getPokemonList();
+  };
 
-    // Read the form data
-    const form = e.target;
-    const formData = new FormData(form);
-    const searchName = formData.get('searchName');
-
-    console.log(searchName);
-
-    axios
-      .get(`https://pokeapi.co/api/v2/pokemon/${searchName}`)
-      .then((response) => console.log(response))
-      .catch((error) => console.error(error));
-  }
+  const getPokemonList = async () => {
+    try {
+      const response = await axios.get(`${baseUrl}?&limit=15"`);
+      setPokemonList(
+        response.data.results.map((pokemon) => ({
+          name: pokemon.name,
+          url: pokemon.url,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
-    <form method='get' onSubmit={handleSubmit}>
-      <label>
-        Search By Name: <input name='searchName' />
-      </label>
-      <button type='submit'>Search</button>
+    <>
       <hr />
-    </form>
+      <form method='get' onSubmit={handleSubmit}>
+        <label>
+          Search By Name: <input name='searchName' />
+        </label>
+        <button type='submit' style={{ marginLeft: '10px' }}>
+          Search
+        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
+          {pokemonList.map((pokemon) => (
+            <PokemonInfo
+              key={pokemon.name}
+              url={pokemon.url}
+              style={{ width: '100%', flexBasis: '23%' }}
+            />
+          ))}
+        </div>
+      </form>
+      <hr />
+    </>
   );
 }
